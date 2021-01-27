@@ -1,8 +1,10 @@
-#include "teamnote.h"
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 int main()
 {
-    char arr[200], qwe[200], * ptr;
+    char arr[200], qwe[200], *ptr;
     int i, j, anw;
 
     scanf("%d", &i);
