@@ -1,7 +1,9 @@
 import numpy as np
 import binascii
 import cv2
-
+"""
+JPEG Parser v0.1 for Python3
+"""
 #marker = [b'ffd8',b'ffe0',b'ffe1',b'ffc0',b'ffc2',b'ffc4',b'ffdb',b'ffdd',b'ffda',b'ffd0',b'ffd1',b'ffd2',b'ffd3',b'ffd4',b'ffd5',b'ffd6',b'ffd7',b'fffe',b'ffd9']
 #print("Offset : ",hex(offset)) for debug
 
