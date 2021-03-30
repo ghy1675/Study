@@ -1,23 +1,31 @@
 import numpy as np
 import binascii
 import cv2
+"""
+JPEG Parser v0.1 for Python3
+"""
 
 #marker = [b'ffd8',b'ffe0',b'ffe1',b'ffc0',b'ffc2',b'ffc4',b'ffdb',b'ffdd',b'ffda',b'ffd0',b'ffd1',b'ffd2',b'ffd3',b'ffd4',b'ffd5',b'ffd6',b'ffd7',b'fffe',b'ffd9']
 #print("Offset : ",hex(offset)) for debug
 
 offset = 0  #file offset
 
+
 def read_marker(file,marker):
      global offset
+
      mv = 2
      offset = offset + mv
+
      tmp = file.read(mv) #FF D8
      print("%s : "%marker,bin_2_ascii_hex(tmp))
 
 def read_len(file,marker):
      global offset
+
      mv = 2
      offset = offset + mv
+
      tmp = file.read(mv)
      print("%s_LEN : "%marker,int(bin_2_ascii_hex(tmp),16))
      return int(bin_2_ascii_hex(tmp),16)-mv
@@ -26,7 +34,7 @@ def is_next(file,marker):
      mv = 2
      tmp = file.read(mv)
      tmp = bin_2_ascii_hex(tmp)
-     return marker==tmp
+     return marker == tmp
 
 def bin_2_ascii_hex(argv):
      return binascii.b2a_hex(argv)
@@ -47,7 +55,7 @@ def APP(file):
      app_len = read_len(file,marker)
      app = file.read(app_len)
 
-     tmp=is_next(file, b'ffe1')
+     tmp = is_next(file, b'ffe1')
      offset = offset + app_len
 
      file.seek(offset)
@@ -67,11 +75,11 @@ def DQT(file):
      dqt_len = read_len(file,marker)
      dqt = file.read(dqt_len)
 
-     tmp=is_next(file, b'ffdb')
+     tmp = is_next(file, b'ffdb')
      offset = offset + dqt_len
 
      file.seek(offset)
-     if(tmp==b'ffdb'):
+     if(tmp == b'ffdb'):
           DQT(file)
      return file
 
@@ -86,7 +94,7 @@ def SOF(file):
      sos = file.read(sos_len)
 
      offset = offset + sos_len
-     tmp=is_next(file,b'ffc0')
+     tmp = is_next(file,b'ffc0')
 
      file.seek(offset)
      if(tmp):
@@ -125,10 +133,10 @@ def SOS(file):
      tmp = is_next(file,b'ffda')
 
      if(tmp):
-          file.seek(offset+2)
+          file.seek(offset + 2)
           SOS(file)
      else:
-          file.seek(offset-1)
+          file.seek(offset - 1)
           return file
 
 def DATA(file):
@@ -155,7 +163,8 @@ def main():
      find_marker(src)
 
 
-main()
+if __name__ == "__main__":
+     main()
 """ 
 QY=np.array([[16,11,10,16,24,40,51,61],
                          [12,12,14,19,26,48,60,55],
