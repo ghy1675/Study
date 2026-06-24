@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DONGGUL Mobile Menu Maker (French Plaster & Paper Texture)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Gowun Batang for unified warm analogue styling -->
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Gowun Batang', Georgia, serif; 
+            background-color: #120e0d; /* 어두운 뒷배경 톤 일치 */
+            color: #2e211a; 
+            overflow-x: hidden; 
+        }
+        .font-serif { 
+            font-family: 'Playfair Display', Georgia, serif; 
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .dots-leader { flex-grow: 1; border-bottom: 1px dotted rgba(74, 52, 40, 0.2); margin: 0 10px 4px 10px; }
+        [contenteditable="true"]:focus { outline: 1px dashed #c5a059; background-color: rgba(197, 160, 89, 0.08); padding: 0 4px; border-radius: 2px; }
+        .capture-active .no-capture { display: none !important; }
+        .capture-active .menu-card-border { border: none !important; box-shadow: none !important; }
+        
+        /* Unified Gowun Batang Font Class */
+        .unified-font {
+            font-family: 'Gowun Batang', 'Georgia', serif !important;
+        }
+
+        /* Smooth Slider Container */
+        #slider-viewport {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+        #pages-wrapper {
+            display: flex;
+            height: 100%;
+            width: 800%; /* 8 Pages (Whisky + Cocktail added) */
+            transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1);
+            will-change: transform;
+        }
+        .page-slide {
+            width: 12.5%; /* 100% / 8 Pages */
+            height: 100%;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* Distressed French Plaster Color Base */
+        .paper-bg {
+            background: 
+                radial-gradient(circle at 15% 15%, rgba(255, 253, 246, 0.95) 0%, transparent 55%),
+                radial-gradient(circle at 85% 85%, rgba(226, 211, 185, 0.4) 0%, transparent 60%),
+                radial-gradient(circle at 50% 50%, rgba(240, 230, 210, 0.5) 0%, transparent 70%),
+                linear-gradient(135deg, #FAF7EE 0%, #E3D1B4 100%);
+            position: relative;
+        }
+
+        /* 실시간 미세 종이 섬유 및 오가닉 노이즈 질감 레이어 */
+        .paper-bg::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.16; /* 눈에 거슬리지 않는 최적의 종이 입자 밀도 */
+            pointer-events: none;
+            mix-blend-mode: multiply;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paperFiber'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paperFiber)'/%3E%3C/svg%3E");
+            z-index: 1;
+        }
+        /* 글씨와 로고가 종이 입자 뒤에 묻히지 않고 선명하게 보이도록 z-index 조율 */
+        #capture-zone > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* 데일리샷 탐색 링크 호버 효과 및 시각적 안내 디자인 */
+        .menu-item span[data-eng] {
+            cursor: pointer;
+            transition: color 0.15s ease, text-decoration 0.15s ease;
+        }
+        .menu-item span[data-eng]:hover {
+            text-decoration: underline;
+            color: #b89047 !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-start py-8 px-4">
+
+    <!-- Header (No Capture) -->
+    <header class="text-center mb-6 no-capture max-w-md w-full">
+        <h1 class="font-serif text-3xl font-bold text-[#b49359] tracking-wider mb-1">DONGGUL</h1>
+        <p class="text-[10px] text-gray-500">모바일 슬라이딩 메뉴판 편집기 (앤티크 프렌치 플라스터 테마)</p>
+        
+        <!-- Language Control -->
+        <div class="mt-4 p-3 bg-[#e0d6c5]/20 border border-[#b49359]/20 rounded-2xl flex flex-col gap-2 text-left">
+            <!-- Lang Switcher -->
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] font-semibold text-gray-600">표시 언어 설정:</span>
+                <div class="flex space-x-1 bg-[#120e0d]/10 p-1 rounded-full">
+                    <button id="btn-lang-ko" onclick="setLanguage('ko')" class="px-3 py-1 text-[10px] font-bold rounded-full bg-[#3c291d] text-white transition-all">KOR (한국어)</button>
+                    <button id="btn-lang-en" onclick="setLanguage('en')" class="px-3 py-1 text-[10px] font-bold rounded-full text-gray-500 transition-all">ENG (English)</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Slide Tabs (Slideable category buttons with auto centering) -->
+    <div id="tab-container" class="flex space-x-1 mb-6 no-capture max-w-md w-full bg-[#130f0d] p-1.5 rounded-full border border-white/5 overflow-x-auto no-scrollbar scroll-smooth whitespace-nowrap">
+        <button onclick="switchPage(1)" id="tab1" class="flex-shrink-0 px-4 py-2 text-xs font-medium rounded-full transition-all duration-200 bg-[#b89047] text-[#120e0d]" data-eng="Home & Guide" data-kor="홈 & 가이드">홈 & 가이드</button>
+        <button onclick="switchPage(2)" id="tab2" class="flex-shrink-0 px-4 py-2 text-xs font-medium rounded-full transition-all duration-200 text-[#7b8c9e]" data-eng="Speyside" data-kor="스페이사이드">스페이사이드</button>
+        <button onclick="switchPage(3)" id="tab3" class="flex-shrink-0 px-4 py-2 text-xs font-medium rounded-full transition-all duration-200 text-[#7b8c9e]" data-eng="Highland & Island" data-kor="하이랜드&아일랜드">하이랜드&아일랜드</button>
+        <button onclick="switchPage(4)" id="tab4" class="flex-shrink-0 px-4 py-2 text-xs font-medium rounded-full transition-all duration-200 text-[#7b8c9e]" data-eng="Islay (Peat)" data-kor="아일레이 (피트)">아일레이 (피트)</button>
+        <button onclick="switchPage(5)" id="tab5" class="flex-shrink-0 px-4 py-2 text-xs font-medium rounded-full transition-all duration-200 text-[#7b8c9e]" data-eng="World & Blended" data-kor="월드 & 블렌디드">월드 & 블렌디드</button>
+        <button onclick="switchPage(6)" id="tab6" class="flex-shrink-0 px-4 py-2 text-xs font-medium rounded-full transition-all duration-200 text-[#7b8c9e]" data-eng="Bourbon & Etc" data-kor="버번 & 기타">버번 & 기타</button>
+        <button onclick="switchPage(7)" id="tab7" class="flex-shrink-0 px-4 py-2 text-xs font-medium rounded-full transition-all duration-200 text-[#7b8c9e]" data-eng="Cocktail (1)" data-kor="칵테일 (1)">칵테일 (1)</button>
+        <button onclick="switchPage(8)" id="tab8" class="flex-shrink-0 px-4 py-2 text-xs font-medium rounded-full transition-all duration-200 text-[#7b8c9e]" data-eng="Cocktail (2)" data-kor="칵테일 (2)">칵테일 (2)</button>
+    </div>
+
+    <!-- Main Mobile Frame Container (High-End Tactile Cotton Paper Style) -->
+    <main id="capture-zone" class="relative w-[390px] h-[780px] paper-bg border-4 border-double border-[#876646]/30 shadow-[0_15px_50px_rgba(40,30,20,0.25)] overflow-hidden flex flex-col justify-between p-8 rounded-[2.5rem] menu-card-border unified-font">
+        
+        <!-- Top Logo Border Line -->
+        <div class="w-full flex items-center justify-between mb-4 flex-shrink-0">
+            <span class="h-[1px] bg-gradient-to-r from-transparent via-[#876646]/30 to-transparent flex-1"></span>
+            <span class="font-serif text-[11px] font-semibold tracking-[0.4em] text-[#84653e] mx-4" contenteditable="true">DONGGUL</span>
+            <span class="h-[1px] bg-gradient-to-r from-transparent via-[#b89047]/50 to-transparent flex-1"></span>
+        </div>
+        
+        <!-- Vintage Handdrawn Flower Motif (Under logo) -->
+        <div class="flex justify-center items-center opacity-65 mb-4 flex-shrink-0">
+            <svg width="24" height="12" viewBox="0 0 24 12" fill="none" class="stroke-[#84653e]">
+                <path d="M2 10C5 10 7 6 12 6C17 6 19 10 22 10" stroke-width="1" stroke-linecap="round"/>
+                <path d="M12 1L12 11" stroke-width="1.2" stroke-linecap="round"/>
+                <circle cx="12" cy="1" r="1.5" fill="#84653e"/>
+            </svg>
+        </div>
+
+        <!-- Slider Viewport -->
+        <div id="slider-viewport" class="flex-1 min-h-0">
+            <div id="pages-wrapper">
+                
+                <!-- ================= PAGE 1: HOME & GUIDE ================= -->
+                <div class="page-slide">
+                    <div class="flex-1 flex flex-col justify-center items-center">
+                        <div class="text-center mb-10">
+                            <h2 class="font-serif text-5xl font-bold text-[#443126] tracking-[0.2em] uppercase mb-3" contenteditable="true">Whisky</h2>
+                            <p class="text-xs text-[#84653e] tracking-[0.3em] italic font-serif" contenteditable="true">"Taste the Time, Feel the Cave"</p>
+                        </div>
+
+                        <div class="w-full border-y border-[#b89047]/30 py-6 px-4 bg-white/10 rounded-xl shadow-inner">
+                            <h3 class="text-xs font-bold text-[#84653e] tracking-[0.2em] mb-4 text-center uppercase" id="guide-title" data-eng="[ STANDARD GUIDE ]" data-kor="[ 기본 가이드 ]">[ 기본 가이드 ]</h3>
+                            <p class="text-xs text-[#523d32] text-center leading-loose font-medium" id="guide-desc" 
+                               data-eng="∙ 모든 위스키는 40ml Standard Pour로 제공됩니다.<br>∙ 하이볼 / 탄산수 변경 옵션<br><span class='text-[#84653e]'>(진저에일 / 토닉워터 +2.0, 싱하 소다 +3.0)</span><br><br><span class='text-[10.5px] text-[#9c4c36] font-semibold'>∙ Broken Glass Charge : Riedel Spirit ₩50,000, Others ₩15,000</span>"
+                               data-kor="∙ 모든 위스키는 40ml 정량(Standard Pour)으로 제공됩니다.<br>∙ 하이볼 / 탄산수 변경 옵션<br><span class='text-[#84653e]'>(진저에일 / 토닉워터 +2.0, 싱하 탄산수 +3.0)</span><br><br><span class='text-[10.5px] text-[#9c4c36] font-semibold'>∙ 브로큰 차지 : 리델 스피릿 50,000원, 기타 15,000원</span>">
+                                ∙ 모든 위스키는 40ml 정량(Standard Pour)으로 제공됩니다.<br>
+                                ∙ 하이볼 / 탄산수 변경 옵션<br>
+                                <span class="text-[#84653e] opacity-80">(진저에일 / 토닉워터 +2.0, 싱하 탄산수 +3.0)</span><br><br>
+                                <span class="text-[10.5px] text-[#9c4c36] font-semibold">∙ 브로큰 차지 : 리델 스피릿 50,000원, 기타 15,000원</span>
+                            </p>
+                            <div class="mt-6 pt-5 border-t border-[#b89047]/20 text-center">
+                                <p class="text-[10px] text-[#8d7c73] font-serif italic" contenteditable="true">세상의 소음은 잠시 꺼두고,<br>오롯이 당신의 잔에만 집중하는 시간</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================= PAGE 2: SPEYSIDE ================= -->
+                <div class="page-slide">
+                    <h3 class="font-serif text-xs text-[#4a3428] font-bold tracking-wider mb-4 border-b border-[#b89047]/30 pb-1 uppercase flex-shrink-0" id="title-speyside" data-eng="Scotch Single Malt - Speyside" data-kor="스카치 싱글몰트 - 스페이사이드" contenteditable="true">스카치 싱글몰트 - 스페이사이드</h3>
+                    <div class="space-y-2.5 overflow-y-auto no-scrollbar flex-1 pr-1 font-medium text-[#443126]" id="speyside-list">
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="The Glenlivet 12 YO" data-kor="글렌리벳 12년" contenteditable="true">글렌리벳 12년</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.7</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="The Glenlivet 15 YO" data-kor="글렌리벳 15년" contenteditable="true">글렌리벳 15년</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">2.0</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="The Glenlivet 18 YO" data-kor="글렌리벳 18년" contenteditable="true">글렌리벳 18년</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">3.0</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Glen Grant 10 YO" data-kor="글렌그란트 10년" contenteditable="true">글렌그란트 10년</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.5</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Glen Grant 12 YO" data-kor="글렌그란트 12년" contenteditable="true">글렌그란트 12년</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.6</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Glenfiddich 12 YO" data-kor="글렌피딕 12년" contenteditable="true">글렌피딕 12년</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.7</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Glenfiddich 15 YO" data-kor="글렌피딕 15년" contenteditable="true">글렌피딕 15년</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">2.0</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="The Glenrothes 12 YO" data-kor="글렌로티스 12년" contenteditable="true">글렌로티스 12년</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.8</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="GlenAllachie 12 YO" data-kor="글렌알라키 12년" contenteditable="true">글렌알라키 12년</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">2.0</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="GlenAllachie 15 YO" data-kor="글렌알라키 15년" contenteditable="true">글렌알라키 15년</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">2.5</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="GlenAllachie 10 YO CS Batch 12" data-kor="글렌알라키 10년 CS 배치 12" contenteditable="true">글렌알라키 10년 CS 배치 12</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">2.5</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="The Macallan 12 YO Double Cask" data-kor="맥캘란 12년 더블 캐스크" contenteditable="true">맥캘란 12년 더블 캐스크</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.8</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="The Macallan 12 YO Sherry Cask" data-kor="맥캘란 12년 셰리 캐스크" contenteditable="true">맥캘란 12년 셰리 캐스크</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.9</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="The Balvenie 12 YO" data-kor="발베니 12년 더블우드" contenteditable="true">발베니 12년 더블우드</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.8</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="The Balvenie 12 YO Single Barrel - Kelsey" data-kor="발베니 12년 싱글배럴 - 켈시" contenteditable="true">발베니 12년 싱글배럴 - 켈시</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.9</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                    </div>
+                    <button onclick="addMenuItem('speyside-list')" class="no-capture mt-4 py-2 border border-dashed border-[#b89047]/50 rounded-lg text-[10px] text-[#84653e] font-semibold transition-all hover:bg-[#b89047]/10 flex-shrink-0">+ 주류 추가</button>
+                </div>
+
+                <!-- ================= PAGE 3: HIGHLAND & ISLAND ================= -->
+                <div class="page-slide">
+                    <h3 class="font-serif text-xs text-[#4a3428] font-bold tracking-wider mb-4 border-b border-[#b89047]/30 pb-1 uppercase flex-shrink-0" id="title-highland" data-eng="Highlands & Islands" data-kor="하이랜드 & 아일랜드" contenteditable="true">하이랜드 & 아일랜드</h3>
+                    <div class="space-y-2.5 overflow-y-auto no-scrollbar flex-1 pr-1 font-medium text-[#443126]" id="highland-island-list">
+                        <div class="text-[9px] font-bold text-[#6b4f3e] uppercase tracking-widest mt-1 mb-1" id="label-highlands" data-eng="[ HIGHLANDS ]" data-kor="[ 하이랜드 ]">[ 하이랜드 ]</div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Glenmorangie The Original 12 YO" data-kor="글렌모렌지 오리지널 12년" contenteditable="true">글렌모렌지 오리지널 12년</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.6</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Glenmorangie Quinta Ruban" data-kor="글렌모렌지 퀸타루반" contenteditable="true">글렌모렌지 퀸타루반</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.9</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="GlenDronach 12 YO" data-kor="글렌드로낙 12년" contenteditable="true">글렌드로낙 12년</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.8</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Edradour 10 YO" data-kor="에드라두어 10년" contenteditable="true">에드라두어 10년</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">2.5</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Glen Garioch 15 YO" data-kor="글렌기어리 15년" contenteditable="true">글렌기어리 15년</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">3.5</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="The Dalmore 12 YO" data-kor="달모어 12년" contenteditable="true">달모어 12년</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.9</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        
+                        <div class="text-[9px] font-bold text-[#6b4f3e] uppercase tracking-widest mt-3 mb-1" id="label-islands" data-eng="[ ISLANDS ]" data-kor="[ 아일랜드 ]">[ 아일랜드 ]</div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Talisker 10 YO" data-kor="탈리스커 10년" contenteditable="true">탈리스커 10년</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.6</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Highland Park 12 YO" data-kor="하이랜드 파크 12년" contenteditable="true">하이랜드 파크 12년</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.8</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                    </div>
+                    <button onclick="addMenuItem('highland-island-list')" class="no-capture mt-4 py-2 border border-dashed border-[#b89047]/50 rounded-lg text-[10px] text-[#84653e] font-semibold transition-all hover:bg-[#b89047]/10 flex-shrink-0">+ 주류 추가</button>
+                </div>
+
+                <!-- ================= PAGE 4: ISLAY (PEAT) ================= -->
+                <div class="page-slide">
+                    <h3 class="font-serif text-xs text-[#4a3428] font-bold tracking-wider mb-4 border-b border-[#b89047]/30 pb-1 uppercase flex-shrink-0" id="title-islay" data-eng="Scotch Single Malt - Islay Peat" data-kor="스카치 싱글몰트 - 아일레이 피트" contenteditable="true">스카치 싱글몰트 - 아일레이 피트</h3>
+                    <div class="space-y-2.5 overflow-y-auto no-scrollbar flex-1 pr-1 font-medium text-[#443126]" id="islay-list">
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Ardbeg 5 YO" data-kor="아드벡 5년 Wee Beastie" contenteditable="true">아드벡 5년 Wee Beastie</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.6</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Ardbeg 10 YO" data-kor="아드벡 10년" contenteditable="true">아드벡 10년</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.8</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Ardbeg Uigeadail" data-kor="아드벡 우기다일" contenteditable="true">아드벡 우기다일</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">2.5</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Ardbeg Corryvreckan" data-kor="아드벡 코리브레칸" contenteditable="true">아드벡 코리브레칸</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">2.5</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Laphroaig 10 YO" data-kor="라프로익 10년" contenteditable="true">라프로익 10년</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.8</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Lagavulin 16 YO" data-kor="라가불린 16년" contenteditable="true">라가불린 16년</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">2.5</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Bowmore 12 YO" data-kor="보모어 12년" contenteditable="true">보모어 12년</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.8</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item text-[#84653e] font-semibold"><span data-eng="Highland Park Seoul Edition 3 (30ml)" data-kor="하이랜드 파크 서울 에디션 3 (30ml)" contenteditable="true">하이랜드 파크 서울 에디션 3 (30ml)</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">7.0</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Caol Ila 12 YO" data-kor="쿨일라 12년" contenteditable="true">쿨일라 12년</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.8</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Octomore 16.1 (30ml)" data-kor="옥토모어 16.1 (30ml)" contenteditable="true">옥토모어 16.1 (30ml)</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">5.0</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                    </div>
+                    <button onclick="addMenuItem('islay-list')" class="no-capture mt-4 py-2 border border-dashed border-[#b89047]/50 rounded-lg text-[10px] text-[#84653e] font-semibold transition-all hover:bg-[#b89047]/10 flex-shrink-0">+ 주류 추가</button>
+                </div>
+
+                <!-- ================= PAGE 5: WORLD & BLENDED ================= -->
+                <div class="page-slide">
+                    <h3 class="font-serif text-xs text-[#4a3428] font-bold tracking-wider mb-4 border-b border-[#b89047]/30 pb-1 uppercase flex-shrink-0" id="title-world" data-eng="World & Blended Whisky" data-kor="월드 & 블렌디드 위스키" contenteditable="true">월드 & 블렌디드 위스키</h3>
+                    <div class="space-y-2.5 overflow-y-auto no-scrollbar flex-1 pr-1 font-medium text-[#443126]" id="world-blended-list">
+                        <div class="text-[9px] font-bold text-[#6b4f3e] uppercase tracking-widest mt-1 mb-1" id="label-taiwan" data-eng="[ TAIWAN MALT (KAVALAN) ]" data-kor="[ 대만 싱글몰트 - 카발란 ]">[ 대만 싱글몰트 - 카발란 ]</div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Kavalan Distillery Edition" data-kor="카발란 디스틸러리 셀렉션" contenteditable="true">카발란 디스틸러리 셀렉션</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.7</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Kavalan Solist Bourbon (30ml)" data-kor="카발란 솔리스트 버번 (30ml)" contenteditable="true">카발란 솔리스트 버번 (30ml)</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">3.5</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Kavalan Solist Port (30ml)" data-kor="카발란 솔리스트 포트 (30ml)" contenteditable="true">카발란 솔리스트 포트 (30ml)</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">3.5</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Kavalan Solist Sherry (30ml)" data-kor="카발란 솔리스트 셰리 (30ml)" contenteditable="true">카발란 솔리스트 셰리 (30ml)</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">3.7</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Kavalan Solist Vinho Barrique (30ml)" data-kor="카발란 솔리스트 비뇨 바리끄 (30ml)" contenteditable="true">카발란 솔리스트 비뇨 바리끄 (30ml)</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">4.0</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+
+                        <div class="text-[9px] font-bold text-[#6b4f3e] uppercase tracking-widest mt-3 mb-1" id="label-korean" data-eng="[ KOREAN WHISKY ]" data-kor="[ 한국 전통 주류 & 위스키 ]">[ 한국 전통 주류 & 위스키 ]</div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Hwayo X.P" data-kor="화요 X.P (프리미엄 쌀 위스키)" contenteditable="true">화요 X.P</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">2.0</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item text-[#84653e] font-semibold"><span data-eng="KI ONE Batch 8 CS" data-kor="기원 Cask Strength Batch 8" contenteditable="true">기원 Cask Strength Batch 8</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold">2.5</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+
+                        <div class="text-[9px] font-bold text-[#6b4f3e] uppercase tracking-widest mt-3 mb-1" id="label-blended" data-eng="[ BLENDED ]" data-kor="[ 블렌디드 위스키 ]">[ 블렌디드 위스키 ]</div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Monkey Shoulder" data-kor="몽키 숄더" contenteditable="true">몽키 숄더</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.3</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Maltman 25 YO (30ml)" data-kor="몰트만 25년 (30ml) 독병" contenteditable="true">몰트만 25년 (30ml) 독병</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">3.5</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Suntory Kakubin (Super Chilled)" data-kor="산토리 가쿠빈 (슈퍼 칠드)" contenteditable="true">산토리 가쿠빈 (슈퍼 칠드)</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.2</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                    </div>
+                    <button onclick="addMenuItem('world-blended-list')" class="no-capture mt-4 py-2 border border-dashed border-[#b89047]/50 rounded-lg text-[10px] text-[#84653e] font-semibold transition-all hover:bg-[#b89047]/10 flex-shrink-0">+ 주류 추가</button>
+                </div>
+
+                <!-- ================= PAGE 6: BOURBON & ETC ================= -->
+                <div class="page-slide">
+                    <h3 class="font-serif text-xs text-[#4a3428] font-bold tracking-wider mb-4 border-b border-[#b89047]/30 pb-1 uppercase flex-shrink-0" id="title-bourbon" data-eng="Bourbon & Others" data-kor="버번 & 기타 스피릿" contenteditable="true">버번 & 기타 스피릿</h3>
+                    <div class="space-y-2.5 overflow-y-auto no-scrollbar flex-1 pr-1 font-medium text-[#443126]" id="bourbon-etc-list">
+                        <div class="text-[9px] font-bold text-[#6b4f3e] uppercase tracking-widest mt-1 mb-1" id="label-bourbon" data-eng="[ BOURBON ]" data-kor="[ 아메리칸 버번 ]">[ 아메리칸 버번 ]</div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Maker's Mark" data-kor="메이커스 마크" contenteditable="true">메이커스 마크</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.2</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Buffalo Trace" data-kor="버팔로 트레이스" contenteditable="true">버팔로 트레이스</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.2</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Wild Turkey 101 8 YO Bourbon" data-kor="와일드 터키 101 8년" contenteditable="true">와일드 터키 101 8년</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.3</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item text-[#84653e] font-semibold"><span data-eng="Maker's Mark CS 25-03" data-kor="메이커스 마크 CS 25-03" contenteditable="true">메이커스 마크 CS 25-03</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold">1.6</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Sagamore Spirit Signature Rye" data-kor="사가모어 스피릿 시그니처 라이" contenteditable="true">사가모어 스피릿 시그니처 라이</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.7</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Wild Turkey Kentucky Spirit (TY-R)" data-kor="와일드 터키 켄터키 스피릿 (TY-R)" contenteditable="true">와일드 터키 켄터키 스피릿 (TY-R)</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.8</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Knob Creek 9 YO" data-kor="놉 크릭 9년" contenteditable="true">놉 크릭 9년</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.8</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Russell's Reserve Single Barrel" data-kor="러셀 리저브 싱글 배럴" contenteditable="true">러셀 리저브 싱글 배럴</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.9</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Booker's 2025-01E (30ml)" data-kor="부커스 2025-01E (30ml) CS" contenteditable="true">Booker's 2025-01E (30ml)</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">3.0</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        
+                        <div class="text-[9px] font-bold text-[#6b4f3e] uppercase tracking-widest mt-3 mb-1" id="label-tequila" data-eng="[ TEQUILA ]" data-kor="[ 데킬라 ]">[ 데킬라 ]</div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Tequila Shot" data-kor="데킬라 샷" contenteditable="true">데킬라 샷</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">0.5</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Jose Cuervo Especial" data-kor="호세 쿠엘보 에스페셜" contenteditable="true">호세 쿠엘보 에스페셜</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">0.7</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        
+                        <div class="text-[9px] font-bold text-[#6b4f3e] uppercase tracking-widest mt-3 mb-1" id="label-cognac" data-eng="[ COGNAC ]" data-kor="[ 브랜디 & 꼬냑 ]">[ 브랜디 & 꼬냑 ]</div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Hennessy VSOP" data-kor="헤네시 V.S.O.P" contenteditable="true">Hennessy VSOP</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.6</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Remy martin VSOP" data-kor="레미 마틴 V.S.O.P" contenteditable="true">Remy martin VSOP</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.7</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Hennessy XO (30ml)" data-kor="헤네시 X.O (30ml)" contenteditable="true">Hennessy XO (30ml)</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">3.5</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                    </div>
+                    <button onclick="addMenuItem('bourbon-etc-list')" class="no-capture mt-4 py-2 border border-dashed border-[#b89047]/50 rounded-lg text-[10px] text-[#84653e] font-semibold transition-all hover:bg-[#b89047]/10 flex-shrink-0">+ 주류 추가</button>
+                </div>
+
+                <!-- ================= PAGE 7: COCKTAIL (1) ================= -->
+                <div class="page-slide">
+                    <div class="flex flex-col flex-1 min-h-0">
+                        <h3 class="font-serif text-xs text-[#4a3428] font-bold tracking-wider mb-1 uppercase flex-shrink-0" id="title-cocktail-1" data-eng="Cocktail - Signatures & Classics (1)" data-kor="칵테일 - 시그니처 & 클래식 (1)" contenteditable="true">칵테일 - 시그니처 & 클래식 (1)</h3>
+                        <p class="text-[8px] text-gray-500 italic mb-3 flex-shrink-0 leading-relaxed" id="cocktail-info" data-eng="Please ask our staff for any cocktail recommendations, explanations, or drinks not listed." data-kor="메뉴판에 없는 칵테일이나 추천, 설명이 필요하시면 언제든 편하게 직원에게 말씀해 주세요." contenteditable="true">메뉴판에 없는 칵테일이나 추천, 설명이 필요하시면 언제든 편하게 직원에게 말씀해 주세요.</p>
+                        
+                        <div class="space-y-3 overflow-y-auto no-scrollbar flex-1 pr-1 font-medium text-[#443126]" id="cocktail-list-1">
+                            <!-- Signatures -->
+                            <div class="text-[9px] font-bold text-[#6b4f3e] uppercase tracking-widest mt-1 mb-1" id="label-signature" data-eng="[ SIGNATURE ]" data-kor="[ 시그니처 ]">[ 시그니처 ]</div>
+                            
+                            <div class="menu-item flex flex-col pb-1">
+                                <div class="flex items-end justify-between text-[11px] font-medium w-full">
+                                    <span data-eng="Donggul" data-kor="동굴" contenteditable="true">동굴</span>
+                                    <span class="dots-leader"></span>
+                                    <span class="text-[#4a3428] font-bold" contenteditable="true">1.6</span>
+                                    <button onclick="this.parentElement.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button>
+                                </div>
+                                <p class="text-[8.5px] text-[#8d7c73] mt-0.5" data-eng="- A strong and sweet signature cocktail" data-kor="- 도수 있고 달달한 시그니처 칵테일" contenteditable="true">- 도수 있고 달달한 시그니처 칵테일</p>
+                            </div>
+                            
+                            <div class="menu-item flex flex-col pb-1">
+                                <div class="flex items-end justify-between text-[11px] font-medium w-full">
+                                    <span data-eng="Wine Highball" data-kor="와인 하이볼" contenteditable="true">와인 하이볼</span>
+                                    <span class="dots-leader"></span>
+                                    <span class="text-[#4a3428] font-bold" contenteditable="true">1.2</span>
+                                    <button onclick="this.parentElement.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button>
+                                </div>
+                                <p class="text-[8.5px] text-[#8d7c73] mt-0.5" data-eng="- Perfect when you want both wine and a cocktail" data-kor="- 와인과 칵테일 모두 원할 때 제격인 하이볼" contenteditable="true">- 와인과 칵테일 모두 원할 때 제격인 하이볼</p>
+                            </div>
+
+                            <!-- Classics Part 1 -->
+                            <div class="text-[9px] font-bold text-[#6b4f3e] uppercase tracking-widest mt-2 mb-1" id="label-classic-1" data-eng="[ CLASSIC - 1 ]" data-kor="[ 클래식 - 1 ]">[ 클래식 - 1 ]</div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Long Island Iced Tea" data-kor="롱아일랜드 아이스티" contenteditable="true">롱아일랜드 아이스티</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.4</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Tokyo Iced Tea" data-kor="도쿄 아이스티" contenteditable="true">도쿄 아이스티</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.4</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="AMF (Adios Mother Fucker)" data-kor="아디오스 마더퍼커" contenteditable="true">아디오스 마더퍼커</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.4</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Long Beach Iced Tea" data-kor="롱비치 아이스티" contenteditable="true">롱비치 아이스티</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.4</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Godfather" data-kor="갓파더" contenteditable="true">갓파더</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.6</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Godmother" data-kor="갓마더" contenteditable="true">갓마더</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.4</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="The Boss" data-kor="더 보스" contenteditable="true">더 보스</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.8</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="French Connection" data-kor="프렌치 커넥션" contenteditable="true">프렌치 커넥션</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.8</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Orange Gin & Tonic" data-kor="오렌지 진토닉" contenteditable="true">오렌지 진토닉</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.8</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Zest Gin & Tonic" data-kor="제스트 진토닉" contenteditable="true">제스트 진토닉</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.8</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Dessert Gin & Tonic" data-kor="디저트 진토닉" contenteditable="true">디저트 진토닉</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.8</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Black Russian" data-kor="블랙 러시안" contenteditable="true">블랙 러시안</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.4</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="White Russian" data-kor="화이트 러시안" contenteditable="true">화이트 러시안</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.4</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Negroni" data-kor="네그로니" contenteditable="true">네그로니</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.8</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Old Fashioned" data-kor="올드 패션드" contenteditable="true">올드 패션드</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.8</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Faust" data-kor="파우스트" contenteditable="true">파우스트</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.6</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        </div>
+                    </div>
+                    <button onclick="addMenuItem('cocktail-list-1')" class="no-capture mt-4 py-2 border border-dashed border-[#b89047]/50 rounded-lg text-[10px] text-[#84653e] font-semibold transition-all hover:bg-[#b89047]/10 flex-shrink-0">+ 칵테일 추가</button>
+                </div>
+
+                <!-- ================= PAGE 8: COCKTAIL (2) ================= -->
+                <div class="page-slide">
+                    <div class="flex flex-col flex-1 min-h-0">
+                        <h3 class="font-serif text-xs text-[#4a3428] font-bold tracking-wider mb-4 border-b border-[#b89047]/30 pb-1 uppercase flex-shrink-0" id="title-cocktail-2" data-eng="Cocktails - Classics (2) & Others" data-kor="칵테일 - 클래식 (2) & 기타" contenteditable="true">칵테일 - 클래식 (2) & 기타</h3>
+                        
+                        <div class="space-y-2.5 overflow-y-auto no-scrollbar flex-1 pr-1 font-medium text-[#443126]" id="cocktail-list-2">
+                            <!-- Classics Part 2 -->
+                            <div class="text-[9px] font-bold text-[#6b4f3e] uppercase tracking-widest mt-1 mb-1" id="label-classic-2" data-eng="[ CLASSIC - 2 ]" data-kor="[ 클래식 - 2 ]">[ 클래식 - 2 ]</div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Jack & Coke" data-kor="잭콕" contenteditable="true">잭콕</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.4</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Kahlúa & Coke" data-kor="깔루아 콕" contenteditable="true">깔루아 콕</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.4</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Amaretto & Coke" data-kor="아마레또 콕" contenteditable="true">아마레또 콕</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.4</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Malibu & Coke" data-kor="말리부 콕" contenteditable="true">말리부 콕</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.4</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Boulevardier" data-kor="불바디에" contenteditable="true">불바디에</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.6</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Woo Woo" data-kor="우우" contenteditable="true">우우</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.4</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Peach Crush" data-kor="피치 크러쉬" contenteditable="true">피치 크러쉬</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.4</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Peach Sour" data-kor="피치 사워" contenteditable="true">피치 사워</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.4</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Midori Sour" data-kor="미도리 사워" contenteditable="true">미도리 사워</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.4</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="June Bug" data-kor="준벅" contenteditable="true">준벅</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.4</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Blue Hawaii" data-kor="블루 하와이" contenteditable="true">블루 하와이</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.4</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Kahlúa Milk" data-kor="깔루아 밀크" contenteditable="true">깔루아 밀크</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.4</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Baileys Milk" data-kor="베일리스 밀크" contenteditable="true">베일리스 밀크</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.4</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Malibu Orange" data-kor="말리부 오렌지" contenteditable="true">말리부 오렌지</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.4</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Malibu Milk" data-kor="말리부 밀크" contenteditable="true">말리부 밀크</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.4</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+
+                            <!-- Glass Wine -->
+                            <div class="text-[9px] font-bold text-[#6b4f3e] uppercase tracking-widest mt-2 mb-1" id="label-glass-wine" data-eng="[ GLASS WINE ]" data-kor="[ 글라스 와인 ]">[ 글라스 와인 ]</div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Red, White" data-kor="레드, 화이트" contenteditable="true">레드, 화이트</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.0</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+
+                            <!-- Fun -->
+                            <div class="text-[9px] font-bold text-[#6b4f3e] uppercase tracking-widest mt-2 mb-1" id="label-fun" data-eng="[ FUN ]" data-kor="[ 펀 ]">[ 펀 ]</div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Faust from the HELL" data-kor="지옥에서 온 파우스트" contenteditable="true">지옥에서 온 파우스트</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.7</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+
+                            <!-- Shooter -->
+                            <div class="text-[9px] font-bold text-[#6b4f3e] uppercase tracking-widest mt-2 mb-1" id="label-shooter" data-eng="[ SHOOTER ]" data-kor="[ 슈터 ]">[ 슈터 ]</div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Irish Slammer 2ea" data-kor="아이리쉬 슬래머 2잔" contenteditable="true">아이리쉬 슬래머 2잔</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">2.2</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Irish Slammer 4ea" data-kor="아이리쉬 슬래머 4잔" contenteditable="true">아이리쉬 슬래머 4잔</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">4.0</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+
+                            <!-- Non-Alcohol -->
+                            <div class="text-[9px] font-bold text-[#6b4f3e] uppercase tracking-widest mt-2 mb-1" id="label-non-alcohol" data-eng="[ NON-ALCOHOL ]" data-kor="[ 논알코올 ]">[ 논알코올 ]</div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Non-Alcoholic Pineapple Sour" data-kor="논알코올 파인애플 사워" contenteditable="true">논알코올 파인애플 사워</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.2</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Non-Alcoholic Orange Highball" data-kor="논알코올 오렌지 하이볼" contenteditable="true">논알코올 오렌지 하이볼</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.2</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Non-Alcoholic Cranberry" data-kor="논알코올 크랜베리" contenteditable="true">논알코올 크랜베리</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.2</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Non-Alcoholic Fresh Lemon Squash" data-kor="논알코올 프레시 레몬 스쿼시" contenteditable="true">논알코올 프레시 레몬 스쿼시</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.2</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Shirley Temple" data-kor="셜리 템플" contenteditable="true">셜리 템플</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">1.2</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+
+                            <!-- Outside food welcome -->
+                            <div class="text-[9px] font-bold text-[#6b4f3e] uppercase tracking-widest mt-2 mb-1" id="label-food" data-eng="[ OUTSIDE FOOD WELCOME ]" data-kor="[ 외부 음식 반입 환영 ]">[ 외부 음식 반입 환영 ]</div>
+                            <div class="flex items-end justify-between text-[11px] menu-item"><span data-eng="Cheesecake" data-kor="치즈케이크" contenteditable="true">치즈케이크</span><span class="dots-leader"></span><span class="text-[#4a3428] font-bold" contenteditable="true">0.7</span><button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button></div>
+                        </div>
+                    </div>
+                    <button onclick="addMenuItem('cocktail-list-2')" class="no-capture mt-4 py-2 border border-dashed border-[#b89047]/50 rounded-lg text-[10px] text-[#84653e] font-semibold transition-all hover:bg-[#b89047]/10 flex-shrink-0">+ 칵테일 추가</button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Card Footer (Fixed across all slides) -->
+        <div class="w-full text-center mt-4 pt-4 border-t border-[#b89047]/20 flex-shrink-0">
+            <p class="font-serif text-[9px] tracking-[0.2em] text-[#84653e] font-medium" contenteditable="true">SEOUL, HUAMDONG ∙ DONGGUL</p>
+        </div>
+    </main>
+
+    <!-- UI Buttons (No Capture) -->
+    <div class="mt-8 flex flex-col items-center space-y-4 no-capture max-w-sm w-full">
+        <button onclick="toggleCaptureMode()" id="captureBtn" class="w-full py-3.5 bg-[#b89047] text-[#120e0d] font-bold rounded-xl shadow-lg hover:bg-[#9a7749] transition-all text-sm">
+            📸 캡처 모드 켜기
+        </button>
+    </div>
+
+    <!-- Exit Capture Overlay Button (Safely floats at the bottom viewport and won't get captured!) -->
+    <button onclick="exitCaptureMode()" id="exitCaptureBtn" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 py-2.5 px-6 bg-red-800 hover:bg-red-900 text-white font-bold rounded-full text-xs shadow-2xl tracking-wider transition-all duration-300 z-50 hidden">
+        ✕ 캡처 모드 해제하기 (편집창으로 복귀)
+    </button>
+
+    <script>
+        let currentPage = 1;
+        const totalPages = 8; // Increased from 6 to 8 for the Cocktails pages
+        let currentLang = 'ko';
+
+        // Horizontal sliding & center aligned tab focus
+        function switchPage(pageNum) {
+            currentPage = pageNum;
+            const wrapper = document.getElementById('pages-wrapper');
+            // Calculate percentage based on 8 pages total
+            const percentTranslate = -(pageNum - 1) * 12.5; 
+            wrapper.style.transform = `translateX(${percentTranslate}%)`;
+            
+            // Toggle active styles on tab buttons
+            for (let i = 1; i <= totalPages; i++) {
+                const tab = document.getElementById(`tab${i}`);
+                if (tab) {
+                    if (i === pageNum) { 
+                        tab.classList.add('bg-[#b89047]', 'text-[#120e0d]'); 
+                        tab.classList.remove('text-[#7b8c9e]'); 
+                    } else { 
+                        tab.classList.remove('bg-[#b89047]', 'text-[#120e0d]'); 
+                        tab.classList.add('text-[#7b8c9e]'); 
+                    }
+                }
+            }
+
+            // Auto-center the active tab in scrollbar
+            const tabContainer = document.getElementById('tab-container');
+            const activeTab = document.getElementById(`tab${pageNum}`);
+            if (tabContainer && activeTab) {
+                const targetScroll = activeTab.offsetLeft - (tabContainer.offsetWidth / 2) + (activeTab.offsetWidth / 2);
+                tabContainer.scrollTo({
+                    left: targetScroll,
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+        // Translation application handler with corrected attribute mappings
+        function setLanguage(lang) {
+            currentLang = lang;
+            
+            if (lang === 'ko') {
+                document.getElementById('btn-lang-ko').className = "px-3 py-1 text-[10px] font-bold rounded-full bg-[#3c291d] text-white transition-all";
+                document.getElementById('btn-lang-en').className = "px-3 py-1 text-[10px] font-bold rounded-full text-gray-500 transition-all";
+            } else {
+                document.getElementById('btn-lang-ko').className = "px-3 py-1 text-[10px] font-bold rounded-full text-gray-500 transition-all";
+                document.getElementById('btn-lang-en').className = "px-3 py-1 text-[10px] font-bold rounded-full bg-[#3c291d] text-white transition-all";
+            }
+            updateTranslation();
+        }
+
+        function updateTranslation() {
+            const attrSuffix = currentLang === 'ko' ? 'kor' : 'eng';
+
+            // 1. Translate Tab labels
+            for (let i = 1; i <= totalPages; i++) {
+                const tab = document.getElementById(`tab${i}`);
+                if (tab) {
+                    tab.textContent = tab.getAttribute(`data-${attrSuffix}`);
+                }
+            }
+
+            // 2. Translate Static titles & structures
+            const translatables = [
+                'guide-title', 'guide-desc', 'title-speyside', 'title-highland', 'title-islay', 'title-world', 'title-bourbon', 'title-cocktail-1', 'title-cocktail-2', 'cocktail-info',
+                'label-highlands', 'label-islands', 'label-taiwan', 'label-korean', 'label-blended', 'label-bourbon', 'label-tequila', 'label-cognac', 'label-signature', 'label-classic-1', 'label-classic-2', 'label-glass-wine', 'label-fun', 'label-shooter', 'label-non-alcohol', 'label-food'
+            ];
+            translatables.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.innerHTML = el.getAttribute(`data-${attrSuffix}`);
+                }
+            });
+
+            // 3. Translate individual whiskey & cocktail titles / descriptions
+            document.querySelectorAll('.menu-item').forEach(item => {
+                const textSpan = item.querySelector('span:first-child');
+                if (textSpan && textSpan.hasAttribute(`data-${attrSuffix}`)) {
+                    textSpan.textContent = textSpan.getAttribute(`data-${attrSuffix}`);
+                }
+                const descPara = item.querySelector('p');
+                if (descPara && descPara.hasAttribute(`data-${attrSuffix}`)) {
+                    descPara.textContent = descPara.getAttribute(`data-${attrSuffix}`);
+                }
+            });
+        }
+
+        // Add swipe gesture support on the main card container
+        let touchStartX = 0;
+        let touchEndX = 0;
+        const cardContainer = document.getElementById('capture-zone');
+
+        cardContainer.addEventListener('touchstart', function(e) {
+            if (e.target.hasAttribute('contenteditable')) return;
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        cardContainer.addEventListener('touchend', function(e) {
+            if (e.target.hasAttribute('contenteditable')) return;
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipeGesture();
+        }, { passive: true });
+
+        function handleSwipeGesture() {
+            const threshold = 50; // swipe displacement threshold in px
+            const diff = touchEndX - touchStartX;
+            if (Math.abs(diff) > threshold) {
+                if (diff < 0 && currentPage < totalPages) {
+                    switchPage(currentPage + 1);
+                } else if (diff > 0 && currentPage > 1) {
+                    switchPage(currentPage - 1);
+                }
+            }
+        }
+
+        // Dynamic menu append handler
+        function addMenuItem(listId) {
+            const list = document.getElementById(listId);
+            const newItem = document.createElement('div');
+            newItem.className = 'flex items-end justify-between text-[11px] menu-item';
+            
+            newItem.innerHTML = `
+                <span data-eng="New Premium Bottle" data-kor="새 주류 이름" contenteditable="true">새 주류 이름</span>
+                <span class="dots-leader"></span>
+                <span class="text-[#4a3428] font-bold" contenteditable="true">0.0</span>
+                <button onclick="this.parentElement.remove()" class="no-capture ml-2 text-red-700 text-[10px]">✕</button>
+            `;
+            list.appendChild(newItem);
+            
+            const attrSuffix = currentLang === 'ko' ? 'kor' : 'eng';
+            const spanName = newItem.querySelector('span');
+            spanName.textContent = spanName.getAttribute(`data-${attrSuffix}`);
+            spanName.focus();
+        }
+
+        // 데일리샷 탐색 및 리다이렉트 처리 글로벌 리스너
+        document.getElementById('capture-zone').addEventListener('click', function(e) {
+            // Find the closest span that represents a menu item name
+            const span = e.target.closest('.menu-item span[data-eng]');
+            if (span) {
+                // Bypass redirection if owner is currently editing the text
+                if (span.getAttribute('contenteditable') === 'true' && document.activeElement === span) {
+                    return;
+                }
+                
+                // Bypass if clicked on the delete button (✕)
+                if (e.target.closest('button')) {
+                    return;
+                }
+
+                // Determine appropriate search phrase
+                const query = currentLang === 'ko' ? span.getAttribute('data-kor') : span.getAttribute('data-eng');
+                if (query) {
+                    // Open Daily Shot mobile search engine results in a new tab
+                    window.open(`https://dailyshot.co/m/search/result?q=${encodeURIComponent(query)}`, '_blank');
+                }
+            }
+        });
+
+        function toggleCaptureMode() { 
+            document.body.classList.add('capture-active'); 
+            document.getElementById('exitCaptureBtn').classList.remove('hidden'); 
+        }
+
+        function exitCaptureMode() { 
+            document.body.classList.remove('capture-active'); 
+            document.getElementById('exitCaptureBtn').classList.add('hidden'); 
+        }
+
+        // Initialize translations to Hangeul on launch
+        window.onload = function() {
+            setLanguage('ko');
+        };
+    </script>
+</body>
+</html>
